@@ -22,24 +22,25 @@ class SplashController extends GetxController {
 
   NotificationServices notificationServices = NotificationServices();
 
+  // late BuildContext context;
+
   @override
   void onInit() {
     super.onInit();
     checkLogin();
-    notificationServices.requestNotificationPermission();
-    notificationServices.firebaseInit();
-    signupController.getLocation();
+    // notificationServices.requestNotificationPermission();
+    // notificationServices.firebaseInit();
+    // signupController.getLocation();
     // notificationServices.isTokenRefresh();
-    notificationServices.getDeviceToken().then((value){
-      print("Device token ===========> $value");
-    });
+    // notificationServices.getDeviceToken().then((value){
+    //   print("Device token ===========> $value");
+    // });
   }
 
 
 
   Future<void> checkLogin() async {
     try {
-
       final pref = await SharedPreferences.getInstance();
       String? email = pref.getString('email');
       String? password = pref.getString('password');

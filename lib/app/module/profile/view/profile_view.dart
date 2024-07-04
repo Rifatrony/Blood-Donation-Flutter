@@ -19,50 +19,68 @@ class ProfileView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
-        title: Text("Profile"),
+        title: const Text("Profile"),
       ),
-      body: Obx(
-        () => controller.userProfile.isEmpty
-            ? CircularProgressIndicator()
-            : SingleChildScrollView(
+      body: StreamBuilder<Map<String, dynamic>>(
+          stream: controller.userProfileStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                  child: Text('No user profile data available'));
+            } else {
+              var userProfile = snapshot.data!;
+              return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   // mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Center(
                       child: Hero(
-                        tag: 'donorImage-${controller.userProfile['imageUrl']}',
+                        tag: 'donorImage-${userProfile['imageUrl']}',
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundImage: controller.userProfile['imageUrl'] !=
-                                  null
-                              ? NetworkImage(controller.userProfile['imageUrl'])
+                          backgroundImage: userProfile['imageUrl'] != null
+                              ? NetworkImage(userProfile['imageUrl'])
                               : AssetImage(dpImage) as ImageProvider,
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 10,
                     ),
                     BigText(
-                      title: controller.userProfile['name'] ??
-                          'Name not available',
+                      title: userProfile['name'] ?? 'Name not available',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 2,
                     ),
                     SmallText(
                         title:
-                            "${controller.userProfile['email'] ?? 'Name not available'}"),
-                    SizedBox(
+                            "${userProfile['email'] ?? 'Name not available'}"),
+                    const SizedBox(
                       height: 2,
                     ),
                     SmallText(
                         title:
-                            "Last Donate: ${controller.userProfile['lastDonate'] ?? 'Name not available'}"),
-                    SizedBox(
+                            "Last Donate: ${userProfile['lastDonate'] ?? 'Never donate before'}"),
+                    const SizedBox(
+                      height: 2,
+                    ),
+                    Obx(
+                      () => controller.remainingDaysForNextDonation.value <= 0
+                          ? const SizedBox()
+                          : SmallText(
+                              fontColor: red,
+                              title: "Next donate after ${controller.remainingDaysForNextDonation.value} days",
+                            ),
+                    ),
+                    const SizedBox(
                       height: 15,
                     ),
                     Row(
@@ -71,13 +89,13 @@ class ProfileView extends StatelessWidget {
                         InkWell(
                           onTap: () {},
                           child: Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                                 horizontal: 25, vertical: 8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               color: Colors.grey.shade100,
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
                                 SmallText(
                                   title: "Donations",
@@ -96,13 +114,13 @@ class ProfileView extends StatelessWidget {
                         InkWell(
                           onTap: () {},
                           child: Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                                 horizontal: 25, vertical: 8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               color: Colors.grey.shade100,
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
                                 SmallText(
                                   title: "My Request",
@@ -120,7 +138,7 @@ class ProfileView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 15,
                     ),
                     ProfileMenuWidget(
@@ -130,9 +148,9 @@ class ProfileView extends StatelessWidget {
                       isForwardIcon: false,
                       child: Obx(
                         () => Switch(
-                          value: controller.isSwitched.value,
+                          value: controller.canToggleSwitch.value,
                           onChanged: (value) {
-                            controller.isSwitched.value = value;
+                            controller.toggleSwitch(value);
                           },
                           activeColor: red,
                           activeTrackColor: Colors.red.shade100,
@@ -166,19 +184,19 @@ class ProfileView extends StatelessWidget {
                       icon: Icons.info_outline,
                       title: 'About Us',
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 5,
                     ),
                     InkWell(
-                      onTap: (){
+                      onTap: () {
                         Get.defaultDialog(
                             title: "Warning",
-                            contentPadding: EdgeInsets.symmetric(
+                            contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 15, vertical: 10),
                             content: Column(
                               children: [
-                                Text("Are you sure you want to logout"),
-                                SizedBox(
+                                const Text("Are you sure you want to logout"),
+                                const SizedBox(
                                   height: 15,
                                 ),
                                 Row(
@@ -190,14 +208,14 @@ class ProfileView extends StatelessWidget {
                                           Get.back();
                                         },
                                         child: Container(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 8),
                                           decoration: BoxDecoration(
                                             borderRadius:
-                                            BorderRadius.circular(12),
+                                                BorderRadius.circular(12),
                                             color: Colors.red,
                                           ),
-                                          child: Center(
+                                          child: const Center(
                                             child: SmallText(
                                               title: "Yes",
                                               fontColor: whiteText,
@@ -206,7 +224,7 @@ class ProfileView extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 10,
                                     ),
                                     Expanded(
@@ -215,14 +233,14 @@ class ProfileView extends StatelessWidget {
                                           Get.back();
                                         },
                                         child: Container(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 8),
                                           decoration: BoxDecoration(
                                             borderRadius:
-                                            BorderRadius.circular(12),
+                                                BorderRadius.circular(12),
                                             color: Colors.blue,
                                           ),
-                                          child: Center(
+                                          child: const Center(
                                             child: SmallText(
                                               title: "No",
                                               fontColor: whiteText,
@@ -237,17 +255,17 @@ class ProfileView extends StatelessWidget {
                             ));
                       },
                       child: Container(
-                        padding: EdgeInsets.only(
+                        padding: const EdgeInsets.only(
                           top: 10,
                           bottom: 10,
                         ),
-                        margin: EdgeInsets.only(
+                        margin: const EdgeInsets.only(
                           bottom: 10,
                           left: 10,
                           right: 10,
                         ),
                         // color: Colors.red,
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -268,8 +286,9 @@ class ProfileView extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-      ),
+              );
+            }
+          }),
     );
   }
 }

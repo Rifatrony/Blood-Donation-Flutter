@@ -268,16 +268,40 @@ class SignUpView extends StatelessWidget {
             Obx(()=>
               Visibility(
                 visible: controller.didHadLastDonate.value,
-                child: CustomTextForm(
-                  controller: controller.lastDonateController,
-                  hintText: "Select Last Donate Date",
-                  isSuffix: true,
-                  isReadOnly: true,
-                  suffixIcon: Icons.calendar_month,
-                  onPressSuffix: (){
-                    controller.pickDate(context);
-                  },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextForm(
+                        controller: controller.lastDonateController,
+                        hintText: "Select Last Donate Date",
+                        isSuffix: true,
+                        isReadOnly: true,
+                        suffixIcon: Icons.calendar_month,
+                        onPressSuffix: (){
+                          controller.pickDate(context);
+                        },
 
+                      ),
+                    ),
+
+
+                    SizedBox(width: 10,),
+
+                    Expanded(
+                      child: CustomTextForm(
+                        keyboardType: TextInputType.number,
+                        controller: controller.totalLastDonateController,
+                        hintText: "Total Donate",
+                        // isSuffix: true,
+                        // isReadOnly: true,
+                        // suffixIcon: Icons.calendar_month,
+                        // onPressSuffix: (){
+                        //   controller.pickDate(context);
+                        // },
+
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -314,7 +338,9 @@ class SignUpView extends StatelessWidget {
                 child: Obx(()=>
                   Center(
                     child: controller.isLoading.value
-                        ? CircularProgressIndicator()
+                        ? CircularProgressIndicator(
+                      color: Colors.white,
+                    )
                         : SmallText(
                             title: "Sign Up",
                             fontColor: Colors.white,

@@ -55,6 +55,7 @@ dependencies:
   geocoding:
   google_maps_flutter: ^2.7.0
   url_launcher:
+  timeago: ^3.6.1
 #  geolocator:
 #  google_maps_flutter:
 

@@ -82,7 +82,10 @@ class CustomDrawer extends StatelessWidget {
           ),
 
           SidebarMenuItemWidget(
-            onPress: () {},
+            onPress: () {
+              Get.back();
+              Get.toNamed(RouteName.receiveRequest);
+            },
             title: 'My Request',
           ),
 

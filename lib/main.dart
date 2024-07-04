@@ -4,11 +4,14 @@ import 'package:blood_donation_app/app/module/home/view/home_view.dart';
 import 'package:blood_donation_app/app/module/splash/controller/splash_controller.dart';
 import 'package:blood_donation_app/app/module/splash/view/splash_view.dart';
 import 'package:blood_donation_app/app/route/routes.dart';
+import 'package:blood_donation_app/app/services/notification_services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import 'app/module/signup/controller/signup_controller.dart';
 import 'app/route/pages.dart';
 
 
@@ -34,8 +37,15 @@ void main() async {
 
   final controller = Get.put(SplashController());
   // controller.checkLogin();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
+}
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print(message.notification!.title.toString());
 }
 
 class MyApp extends StatelessWidget {
@@ -44,6 +54,20 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final signupController = Get.put(SignupController());
+    signupController.getLocation();
+    NotificationServices notificationServices = NotificationServices();
+    notificationServices.requestNotificationPermission();
+    notificationServices.initLocalNotifications(context, RemoteMessage());
+    notificationServices.getDeviceToken().then((value){
+      print("Device token ===========> $value");
+    });
+    notificationServices.firebaseInit(context);
+    // 7-2-2024
+    notificationServices.setupInteractMessage(context);
+    // 7-2-2024
+
+
     return GetMaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,

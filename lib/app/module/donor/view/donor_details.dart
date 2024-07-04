@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
 import '../../../data/app_image.dart';
+import '../../../route/routes.dart';
 import '../../../utils/app_color.dart';
 import '../../../widget/text/big_text.dart';
 import '../../../widget/text/small_text.dart';
@@ -65,9 +66,12 @@ class DonorDetailsView extends StatelessWidget {
                         tag: 'donorImage-$index',
                         child: CircleAvatar(
                           radius: 80,
-                          backgroundImage: controller.filteredUsers[index]['imageUrl'] != null
-                              ? NetworkImage(controller.filteredUsers[index]['imageUrl'],
-                          ) as ImageProvider
+                          backgroundImage: controller.filteredUsers[index]
+                                      ['imageUrl'] !=
+                                  null
+                              ? NetworkImage(
+                                  controller.filteredUsers[index]['imageUrl'],
+                                ) as ImageProvider
                               : AssetImage(dpImage) as ImageProvider,
                         ),
                       ),
@@ -84,30 +88,27 @@ class DonorDetailsView extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
-
                           const SizedBox(
                             height: 5,
                           ),
-
                           SmallText(
-                            title: "Last Donate: ${controller.filteredUsers[index]['lastDonate']}",
+                            title:
+                                "Last Donate: ${controller.filteredUsers[index]['lastDonate']}",
                           ),
-
                           const SizedBox(
                             height: 5,
                           ),
-
                           SmallText(
-                            title: "Blood Group: ${controller.filteredUsers[index]['bloodGroup']}",
+                            title:
+                                "Blood Group: ${controller.filteredUsers[index]['bloodGroup']}",
                           ),
-
                           const SizedBox(
                             height: 8,
                           ),
-
                           InkWell(
                             onTap: () {
-                              controller.makingPhoneCall(controller.filteredUsers[index]['phone']);
+                              controller.makingPhoneCall(
+                                  controller.filteredUsers[index]['phone']);
                             },
                             child: Row(
                               children: [
@@ -120,7 +121,9 @@ class DonorDetailsView extends StatelessWidget {
                                     decorationColor: Colors.blue,
                                   ),
                                 ),
-                                SizedBox(width: 10,),
+                                SizedBox(
+                                  width: 10,
+                                ),
                                 Icon(
                                   Icons.call,
                                   size: 15,
@@ -129,11 +132,9 @@ class DonorDetailsView extends StatelessWidget {
                               ],
                             ),
                           ),
-
                           const SizedBox(
                             height: 8,
                           ),
-
                           ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
@@ -165,26 +166,27 @@ class DonorDetailsView extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   SizedBox(
                     height: 30,
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5,),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10.0,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: SmallText(
                       maxLines: 3,
-                      title: "Area of Donate: Shafipur, Mouchak, Kaliakair, Konabari, Gazipur",
+                      title:
+                          "Area of Donate: Shafipur, Mouchak, Kaliakair, Konabari, Gazipur",
                     ),
                   ),
-
                   SizedBox(
                     height: 18,
                   ),
-
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -202,15 +204,18 @@ class DonorDetailsView extends StatelessWidget {
                               color: red,
                             ),
                           ),
-                          SizedBox(height: 15,),
+                          SizedBox(
+                            height: 15,
+                          ),
                           CustomTextForm(
                             controller: controller.patientNameController,
                             hintText: "Patient Name",
                             isPrefix: true,
                             prefixIcon: Icons.person_outline_rounded,
                           ),
-                          SizedBox(height: 10,),
-
+                          SizedBox(
+                            height: 10,
+                          ),
                           Row(
                             children: [
                               Expanded(
@@ -221,7 +226,9 @@ class DonorDetailsView extends StatelessWidget {
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
-                              SizedBox(width: 10,),
+                              SizedBox(
+                                width: 10,
+                              ),
                               Expanded(
                                 flex: 2,
                                 child: CustomTextForm(
@@ -232,8 +239,9 @@ class DonorDetailsView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SizedBox(height: 10,),
-
+                          SizedBox(
+                            height: 10,
+                          ),
                           IntlPhoneField(
                             controller: controller.patientNumberController,
                             decoration: InputDecoration(
@@ -248,23 +256,27 @@ class DonorDetailsView extends StatelessWidget {
                             ),
                             initialCountryCode: 'BD',
                             onChanged: (phone) {
-                              print("Complete Number is ${phone.completeNumber}");
+                              print(
+                                  "Complete Number is ${phone.completeNumber}");
                             },
                             onCountryChanged: (country) {
-                              controller.countryCode.value = country.fullCountryCode;
-                              print('Country Code from Controller to: ' + controller.countryCode.value);
+                              controller.countryCode.value =
+                                  country.fullCountryCode;
+                              print('Country Code from Controller to: ' +
+                                  controller.countryCode.value);
                             },
                           ),
-
-                          SizedBox(height: 10,),
-
+                          SizedBox(
+                            height: 10,
+                          ),
                           CustomTextForm(
                             controller: controller.patientProblemController,
                             hintText: "Patient Problem",
                             prefixIcon: Icons.phone,
                           ),
-                          const SizedBox(height: 10,),
-
+                          const SizedBox(
+                            height: 10,
+                          ),
                           CustomTextForm(
                             controller: controller.dateController,
                             hintText: "Date",
@@ -275,8 +287,9 @@ class DonorDetailsView extends StatelessWidget {
                               controller.pickDate(context);
                             },
                           ),
-                          const SizedBox(height: 10,),
-
+                          const SizedBox(
+                            height: 10,
+                          ),
                           Row(
                             children: [
                               Expanded(
@@ -286,7 +299,9 @@ class DonorDetailsView extends StatelessWidget {
                                   prefixIcon: Icons.phone,
                                 ),
                               ),
-                              const SizedBox(width: 10,),
+                              const SizedBox(
+                                width: 10,
+                              ),
                               Expanded(
                                 child: CustomTextForm(
                                   controller: controller.referenceController,
@@ -296,8 +311,9 @@ class DonorDetailsView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10,),
-
+                          const SizedBox(
+                            height: 10,
+                          ),
                           CustomTextForm(
                             controller: controller.commentsController,
                             hintText: "Comments (Optional)",
@@ -307,35 +323,57 @@ class DonorDetailsView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15,),
+                  const SizedBox(
+                    height: 15,
+                  ),
                 ],
               ),
             ),
           ),
-          bottomNavigationBar: Container(
-            height: 50,
-            margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-            child: ElevatedButton(
-              onPressed: requestExists ? null : () {
-                print(controller.filteredUsers[index]['uid']);
-                final currentUser = Get.find<ProfileController>().firebaseUser.value;
-                if (currentUser != null) {
-                  controller.sendRequest(index);
-                } else {
-                  print("Current user is null");
-                  CustomToast().errorToast("Login First");
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: requestExists ? Colors.grey : red,
-                elevation: 5,
-              ),
-              child: Text(
-                requestExists ? "Request Already Sent" : "Send Request",
-                style: GoogleFonts.poppins(
-                  color: whiteText,
-                ),
-              ),
+          bottomNavigationBar: Obx(
+            () => Container(
+              height: 50,
+              margin: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+              child: controller.isSentRequestButtonLoading.value
+                  ? Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: red,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: requestExists
+                          ? null
+                          : () {
+                              // print(controller.filteredUsers[index]['uid']);
+                              final currentUser = Get.find<ProfileController>()
+                                  .firebaseUser
+                                  .value;
+                              if (currentUser != null) {
+                                controller.sendRequest(index);
+                              } else {
+                                // print("Current user is null");
+                                Get.offAllNamed(RouteName.login);
+                                CustomToast().errorToast("Login First");
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: requestExists ? Colors.grey : red,
+                        elevation: 5,
+                      ),
+                      child: Text(
+                        requestExists ? "Request Already Sent" : "Send Request",
+                        style: GoogleFonts.poppins(
+                          color: whiteText,
+                        ),
+                      ),
+                    ),
             ),
           ),
         );
@@ -343,4 +381,3 @@ class DonorDetailsView extends StatelessWidget {
     );
   }
 }
-

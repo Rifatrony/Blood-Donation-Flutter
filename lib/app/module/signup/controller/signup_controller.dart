@@ -81,19 +81,19 @@ class SignupController extends GetxController {
         Geolocator.getPositionStream().listen((Position position) {
       latitude.value = position.latitude;
       longitude.value = position.longitude;
-      getAddressFromLatLang(position);
-      print('Latitude is ${position.latitude}');
-      print('Longitude is ${position.longitude}');
+      // getAddressFromLatLang(position);
+      // print('Latitude is ${position.latitude}');
+      // print('Longitude is ${position.longitude}');
     });
   }
 
-  Future<void> getAddressFromLatLang(Position position) async {
-    List<Placemark> placemark =
-        await placemarkFromCoordinates(position.latitude, position.longitude);
-    Placemark place = placemark[0];
-    address.value = 'Address : ${place.locality},${place.country}';
-    // print('Address: ${place.subAdministrativeArea}');
-  }
+  // Future<void> getAddressFromLatLang(Position position) async {
+  //   List<Placemark> placemark =
+  //       await placemarkFromCoordinates(position.latitude, position.longitude);
+  //   Placemark place = placemark[0];
+  //   address.value = 'Address : ${place.locality},${place.country}';
+  //   // print('Address: ${place.subAdministrativeArea}');
+  // }
 
   final List<String> bloodGroupList = [
     'A +',
@@ -125,6 +125,7 @@ class SignupController extends GetxController {
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final lastDonateController = TextEditingController();
+  final totalLastDonateController = TextEditingController();
   final passwordController = TextEditingController();
 
 
@@ -268,6 +269,10 @@ class SignupController extends GetxController {
             'latitude': latitude.value.toString(),
             'longitude': longitude.value.toString(),
             'deviceToken': deviceToken.toString(),
+            'totalDonate': didHadLastDonate.value == false
+                ? "1"
+                : totalLastDonateController.text,
+            // 'isManuallyAddingTotalLastDonate': false,
           });
 
           Get.snackbar("Success", "Registration Successful");

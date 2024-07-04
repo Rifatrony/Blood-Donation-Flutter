@@ -130,7 +130,6 @@ class DonorController extends GetxController {
   final RxSet<Marker> markers = <Marker>{}.obs;
   final signUpController = Get.find<SignupController>();
 
-
   void updateMarkers() async {
     final newMarkers = <Marker>{};
 
@@ -168,8 +167,7 @@ class DonorController extends GetxController {
           position: LatLng(lat, lng),
           infoWindow: InfoWindow(
               title: donor['name'],
-              snippet: '${donor['bloodGroup']}   ${donor['phone']}'
-          ),
+              snippet: '${donor['bloodGroup']}   ${donor['phone']}'),
           icon: BitmapDescriptor.fromBytes(resizedBytes),
         ),
       );
@@ -177,7 +175,6 @@ class DonorController extends GetxController {
 
     markers.value = newMarkers;
   }
-
 
   Future<Uint8List> resizeAndCircleImage(Uint8List bytes, int size) async {
     final codec = await ui.instantiateImageCodec(bytes,
@@ -235,6 +232,8 @@ class DonorController extends GetxController {
     }
   }
 
+  final isSentRequestButtonLoading = false.obs;
+
   void sendRequest(int index) async {
     if (patientNameController.text.isEmpty) {
       CustomToast().errorToast("Patient name Required");
@@ -263,11 +262,13 @@ class DonorController extends GetxController {
           await checkIfRequestExists(currentUser?.uid, userDetails['uid']);
       if (requestExists) {
         CustomToast().errorToast("Request already sent to this person");
+        isSentRequestButtonLoading.value = false;
         return;
       }
 
       try {
-        await FirebaseFirestore.instance.collection('blood_requests').add({
+        isSentRequestButtonLoading.value = true;
+        final requestRef = await FirebaseFirestore.instance.collection('blood_requests').add({
           'senderId': currentUser?.uid,
           'receiverId': userDetails['uid'],
           'name': patientNameController.text,
@@ -283,11 +284,18 @@ class DonorController extends GetxController {
               referenceController.text.isEmpty ? "" : referenceController.text,
           'comments':
               commentsController.text.isEmpty ? "" : commentsController.text,
+          'requestTime': FieldValue.serverTimestamp(),
+          'status': 'Pending',
+          'requestId': '',
         });
 
+        await requestRef.update({'requestId': requestRef.id});
+
         CustomToast().successToast("Request Sent Successfully");
+        isSentRequestButtonLoading.value = false;
       } catch (e) {
         Get.snackbar("Error", "Failed to send request: $e");
+        isSentRequestButtonLoading.value = false;
       }
     }
   }
@@ -297,10 +305,14 @@ class DonorController extends GetxController {
         .collection('blood_requests')
         .where('senderId', isEqualTo: senderId)
         .where('receiverId', isEqualTo: receiverId)
+        .where('status', isEqualTo: "Pending")
         .get();
 
     return querySnapshot.docs.isNotEmpty;
   }
+
+  // Function to update specific fields
+
 
   @override
   void dispose() {

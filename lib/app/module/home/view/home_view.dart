@@ -13,6 +13,8 @@ import 'package:blood_donation_app/app/widget/blood_symbol_widget.dart';
 import 'package:blood_donation_app/app/widget/image/svg_image.dart';
 import 'package:blood_donation_app/app/widget/text/big_text.dart';
 import 'package:blood_donation_app/app/widget/text/small_text.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -27,6 +29,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../signup/controller/signup_controller.dart';
 
+import 'package:timeago/timeago.dart' as timeago;
+
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
 
@@ -39,6 +43,9 @@ class HomeView extends StatelessWidget {
 
     final signUpController = Get.put(SignupController());
 
+    FirebaseAuth auth = FirebaseAuth.instance;
+    var userId = auth.currentUser?.uid;
+
     var latitude = signUpController.latitude.value;
     var longitude = signUpController.longitude.value;
 
@@ -50,7 +57,7 @@ class HomeView extends StatelessWidget {
       await Future.delayed(
         Duration(milliseconds: 100),
         () async {
-          await bloodRequestController.fetchReceivedRequests(uid);
+          await bloodRequestController.fetchReceivedRequestsStream(uid);
         },
       );
     }
@@ -133,7 +140,7 @@ class HomeView extends StatelessWidget {
             margin: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             height: 180,
             child: Obx(
-                  () => GoogleMap(
+              () => GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: myLatLong,
                   zoom: 12,
@@ -142,16 +149,14 @@ class HomeView extends StatelessWidget {
               ),
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0),
               child: RefreshIndicator(
                 onRefresh: onRefresh,
                 child: ListView(
-                  physics: const BouncingScrollPhysics(),
+                  // physics: const BouncingScrollPhysics(),
                   children: [
-            
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -198,385 +203,79 @@ class HomeView extends StatelessWidget {
                     const SizedBox(
                       height: 10,
                     ),
-                    Obx(
-                      () => bloodRequestController.isLoadingReceivedRequest.value
-                          ? Center(child: CircularProgressIndicator())
-                          : bloodRequestController.receivedRequests.isEmpty
-                              ? SizedBox()
-                              : Container(
-                                  // padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Column(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              "My Blood Request",
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                Get.toNamed(RouteName.receiveRequest);
-                                              },
-                                              child: Text(
-                                                "View All",
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.normal,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+
+                    StreamBuilder<Map<String, List<Map<String, dynamic>>>>(
+                        stream: bloodRequestController.fetchReceivedRequestsStream(userId!),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          } else if (!snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return SizedBox();
+                          } else {
+
+                            var data = snapshot.data!;
+                            // var todayList = data['todayList']!;
+                            // var last7DaysList = data['last7DaysList']!;
+                            var allRequests = data['allRequests']!;
+
+                            return allRequests.isEmpty ? SizedBox() : Column(
+                              children: [
+                                if (snapshot.hasData)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "My Blood Request",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.redAccent,
+                                          ),
                                         ),
-                                      ),
-                                      Obx(
-                                        () => bloodRequestController
-                                                .receivedRequests.isEmpty
-                                            ? SizedBox()
-                                            : const SizedBox(
-                                                height: 8,
-                                              ),
-                                      ),
-                                      Container(
-                                        height: 175,
-                                        margin: EdgeInsets.only(left: 10),
-                                        child: ListView.builder(
-                                          itemCount: bloodRequestController
-                                              .receivedRequests.length,
-                                          physics: const BouncingScrollPhysics(),
-                                          scrollDirection: Axis.horizontal,
-                                          itemBuilder: (context, index) {
-                                            final bloodRequest =
-                                                bloodRequestController
-                                                    .receivedRequests[index];
-                                            final senderDetails =
-                                                bloodRequest['senderDetails'];
-                                            final receiverDetails =
-                                                bloodRequest['receiverDetails'];
-            
-                                            return Container(
-                                              width: 280,
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 10, vertical: 8),
-                                              margin: EdgeInsets.only(right: 10),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade100,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      CircleAvatar(
-                                                        radius: 22,
-                                                        backgroundImage: NetworkImage(
-                                                            senderDetails[
-                                                                'imageUrl']),
-                                                        // Use NetworkImage or AssetImage based on your profile image source
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                      Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            senderDetails['name'],
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight.bold),
-                                                          ),
-                                                          Text(
-                                                            'Sent 2 mnt ago',
-                                                            style: TextStyle(
-                                                                fontSize: 12,
-                                                                color: Colors.green),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  SmallText(
-                                                    title:
-                                                        'Patient Problem: ${bloodRequest['problem']}',
-                                                  ),
-                                                  SizedBox(height: 4),
-                                                  Align(
-                                                    alignment: Alignment.centerRight,
-                                                    child: Text(
-                                                      'Date: ${bloodRequest['donateDate']}',
-                                                      textAlign: TextAlign.end,
-                                                      style: GoogleFonts.poppins(
-                                                        color: greenText,
-                                                        fontWeight: FontWeight.w500,
-                                                        fontSize: 12,
-                                                        fontStyle: FontStyle.italic,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.location_on,
-                                                          color: Colors.red,
-                                                          size: 18),
-                                                      SizedBox(width: 5),
-                                                      Expanded(
-                                                        child: SmallText(
-                                                          title: bloodRequest[
-                                                              'location'],
-                                                          isBold: true,
-                                                          fontWeight: FontWeight.w300,
-                                                          // style: TextStyle(fontSize: 14, color: Colors.red),
-                                                          // maxLines: 2,
-                                                          // overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    children: [
-                                                      InkWell(
-                                                        onTap: () {
-                                                          // Handle cancel request
-                                                        },
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.symmetric(
-                                                                  horizontal: 14,
-                                                                  vertical: 6),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.red,
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                    20),
-                                                          ),
-                                                          child: Center(
-                                                            child: Text(
-                                                              'Delete',
-                                                              style: TextStyle(
-                                                                  fontSize: 14,
-                                                                  color:
-                                                                      Colors.white),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          // Handle accept request
-                                                        },
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.symmetric(
-                                                                  horizontal: 14,
-                                                                  vertical: 6),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.green,
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                    20),
-                                                          ),
-                                                          child: Center(
-                                                            child: Text(
-                                                              'Accept',
-                                                              style: TextStyle(
-                                                                  fontSize: 14,
-                                                                  color:
-                                                                      Colors.white),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            );
+                                        InkWell(
+                                          onTap: () {
+                                            Get.toNamed(
+                                                RouteName.receiveRequest);
                                           },
+                                          child: Text(
+                                            "View All",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                              color: Colors.red,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                    ),
-            
-                    ///
-                    // Obx(
-                    //   () => bloodRequestController.receivedRequests.isEmpty
-                    //       ? SizedBox()
-                    //       : Container(
-                    //           height: 175,
-                    //           margin: EdgeInsets.only(left: 10),
-                    //           child: ListView.builder(
-                    //             itemCount:
-                    //                 bloodRequestController.receivedRequests.length,
-                    //             physics: const BouncingScrollPhysics(),
-                    //             scrollDirection: Axis.horizontal,
-                    //             itemBuilder: (context, index) {
-                    //               final bloodRequest =
-                    //                   bloodRequestController.receivedRequests[index];
-                    //               final senderDetails = bloodRequest['senderDetails'];
-                    //               final receiverDetails =
-                    //                   bloodRequest['receiverDetails'];
-                    //
-                    //               return Container(
-                    //                 width: 280,
-                    //                 padding: EdgeInsets.symmetric(
-                    //                     horizontal: 10, vertical: 8),
-                    //                 margin: EdgeInsets.only(right: 10),
-                    //                 decoration: BoxDecoration(
-                    //                   color: Colors.grey.shade100,
-                    //                   borderRadius: BorderRadius.circular(12),
-                    //                 ),
-                    //                 child: Column(
-                    //                   crossAxisAlignment: CrossAxisAlignment.start,
-                    //                   mainAxisAlignment: MainAxisAlignment.center,
-                    //                   children: [
-                    //                     Row(
-                    //                       children: [
-                    //                         CircleAvatar(
-                    //                           radius: 22,
-                    //                           backgroundImage: NetworkImage(
-                    //                               senderDetails['imageUrl']),
-                    //                           // Use NetworkImage or AssetImage based on your profile image source
-                    //                         ),
-                    //                         SizedBox(width: 10),
-                    //                         Column(
-                    //                           crossAxisAlignment:
-                    //                               CrossAxisAlignment.start,
-                    //                           children: [
-                    //                             Text(
-                    //                               senderDetails['name'],
-                    //                               style: TextStyle(
-                    //                                   fontSize: 16,
-                    //                                   fontWeight: FontWeight.bold),
-                    //                             ),
-                    //                             Text(
-                    //                               'Sent 2 mnt ago',
-                    //                               style: TextStyle(
-                    //                                   fontSize: 12,
-                    //                                   color: Colors.green),
-                    //                             ),
-                    //                           ],
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                     SizedBox(height: 10),
-                    //                     SmallText(
-                    //                       title:
-                    //                           'Patient Problem: ${bloodRequest['problem']}',
-                    //                     ),
-                    //                     SizedBox(height: 4),
-                    //                     Align(
-                    //                       alignment: Alignment.centerRight,
-                    //                       child: Text(
-                    //                         'Date: ${bloodRequest['donateDate']}',
-                    //                         textAlign: TextAlign.end,
-                    //                         style: GoogleFonts.poppins(
-                    //                           color: greenText,
-                    //                           fontWeight: FontWeight.w500,
-                    //                           fontSize: 12,
-                    //                           fontStyle: FontStyle.italic,
-                    //                         ),
-                    //                       ),
-                    //                     ),
-                    //                     SizedBox(height: 2),
-                    //                     Row(
-                    //                       children: [
-                    //                         Icon(Icons.location_on,
-                    //                             color: Colors.red, size: 18),
-                    //                         SizedBox(width: 5),
-                    //                         Expanded(
-                    //                           child: SmallText(
-                    //                             title: bloodRequest['location'],
-                    //                             isBold: true,
-                    //                             fontWeight: FontWeight.w300,
-                    //                             // style: TextStyle(fontSize: 14, color: Colors.red),
-                    //                             // maxLines: 2,
-                    //                             // overflow: TextOverflow.ellipsis,
-                    //                           ),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                     SizedBox(height: 5),
-                    //                     Row(
-                    //                       mainAxisAlignment: MainAxisAlignment.end,
-                    //                       children: [
-                    //                         InkWell(
-                    //                           onTap: () {
-                    //                             // Handle cancel request
-                    //                           },
-                    //                           child: Container(
-                    //                             padding: EdgeInsets.symmetric(
-                    //                                 horizontal: 14, vertical: 6),
-                    //                             decoration: BoxDecoration(
-                    //                               color: Colors.red,
-                    //                               borderRadius:
-                    //                                   BorderRadius.circular(20),
-                    //                             ),
-                    //                             child: Center(
-                    //                               child: Text(
-                    //                                 'Delete',
-                    //                                 style: TextStyle(
-                    //                                     fontSize: 14,
-                    //                                     color: Colors.white),
-                    //                               ),
-                    //                             ),
-                    //                           ),
-                    //                         ),
-                    //                         SizedBox(width: 10),
-                    //                         InkWell(
-                    //                           onTap: () {
-                    //                             // Handle accept request
-                    //                           },
-                    //                           child: Container(
-                    //                             padding: EdgeInsets.symmetric(
-                    //                                 horizontal: 14, vertical: 6),
-                    //                             decoration: BoxDecoration(
-                    //                               color: Colors.green,
-                    //                               borderRadius:
-                    //                                   BorderRadius.circular(20),
-                    //                             ),
-                    //                             child: Center(
-                    //                               child: Text(
-                    //                                 'Accept',
-                    //                                 style: TextStyle(
-                    //                                     fontSize: 14,
-                    //                                     color: Colors.white),
-                    //                               ),
-                    //                             ),
-                    //                           ),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ],
-                    //                 ),
-                    //               );
-                    //             },
-                    //           ),
-                    //         ),
-                    // ),
-            
+
+                                if (snapshot.hasData)
+                                  const SizedBox(
+                                    height: 4,
+                                  ),
+
+                                if (snapshot.hasData)
+                                  Container(
+                                    height: 175,
+                                    margin: const EdgeInsets.only(left: 10),
+                                    child: receiveRequestWidget(allRequests)
+                                  ),
+                              ],
+                            );
+                          }
+                        }),
+
                     const SizedBox(
                       height: 10,
                     ),
@@ -611,7 +310,7 @@ class HomeView extends StatelessWidget {
                       // color: Colors.red,
                       height: 125,
                       margin: const EdgeInsets.only(right: 10),
-            
+
                       child: ListView.builder(
                         itemCount: 5,
                         scrollDirection: Axis.horizontal,
@@ -774,23 +473,24 @@ class HomeView extends StatelessWidget {
                                   ],
                                 ),
                                 // SizedBox(height: 5,),
-            
+
                                 SizedBox(
                                   height: 2,
                                 ),
-            
+
                                 SmallText(
                                   title:
                                       "Im asking for blood, I need 2 bag of AB+ Blood.",
                                   maxLines: 2,
                                 ),
-            
+
                                 SizedBox(
                                   height: 5,
                                 ),
-            
+
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
                                       children: [
@@ -809,7 +509,8 @@ class HomeView extends StatelessWidget {
                                             horizontal: 16, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: red,
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Center(
                                           child: Text(
@@ -927,23 +628,24 @@ class HomeView extends StatelessWidget {
                                   ],
                                 ),
                                 // SizedBox(height: 5,),
-            
+
                                 SizedBox(
                                   height: 2,
                                 ),
-            
+
                                 SmallText(
                                   title:
                                       "Im ready to donate 1bag AB+ blood today. Among Gazipur",
                                   maxLines: 2,
                                 ),
-            
+
                                 SizedBox(
                                   height: 5,
                                 ),
-            
+
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
                                       children: [
@@ -962,7 +664,8 @@ class HomeView extends StatelessWidget {
                                             horizontal: 16, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: red,
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Center(
                                           child: Text(
@@ -982,7 +685,7 @@ class HomeView extends StatelessWidget {
                         },
                       ),
                     ),
-            
+
                     SizedBox(
                       height: 15,
                     ),
@@ -993,6 +696,151 @@ class HomeView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget receiveRequestWidget(List<Map<String, dynamic>> requests) {
+    return ListView.builder(
+      itemCount: requests.length,
+      physics: const BouncingScrollPhysics(),
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (context, index) {
+        var request = requests[index];
+        var senderDetails = request['senderDetails'];
+
+        Timestamp timestamp = request['requestTime'] as Timestamp;
+        DateTime dateTime =
+        timestamp.toDate();
+
+        // Format the DateTime to "time ago" format
+        String timeAgo = timeago.format(dateTime);
+        // final bloodRequest =
+        // bloodRequestController
+        //     .receivedRequests[index];
+
+        // final receiverDetails =
+        // bloodRequest['receiverDetails'];
+
+        return Container(
+          width: 280,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundImage: NetworkImage(senderDetails['imageUrl']),
+                    // Use NetworkImage or AssetImage based on your profile image source
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        senderDetails['name'],
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Sent $timeAgo',
+                        style: TextStyle(fontSize: 12, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SmallText(
+                title: 'Patient Problem: ${request['problem']}',
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Date: ${request['donateDate']}',
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.poppins(
+                    color: greenText,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.red, size: 18),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: SmallText(
+                      title: request['location'],
+                      isBold: true,
+                      fontWeight: FontWeight.w300,
+                      // style: TextStyle(fontSize: 14, color: Colors.red),
+                      // maxLines: 2,
+                      // overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      // Handle cancel request
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(fontSize: 14, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  InkWell(
+                    onTap: () {
+                      // Handle accept request
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Accept',
+                          style: TextStyle(fontSize: 14, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
